@@ -1,0 +1,90 @@
+/* Globalne ustawienia */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #008000;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+header .logo {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+header .user-menu a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+}
+
+header .user-menu a:hover {
+    text-decoration: underline;
+}
+
+/* Sekcja profilu */
+.profile-section {
+    padding: 20px;
+    margin: 0 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-section h1,
+.profile-section h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.profile-section ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.profile-section li {
+    font-size: 16px;
+    margin: 10px 0;
+}
+
+.profile-section table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+.profile-section table th,
+.profile-section table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.profile-section table th {
+    background-color: #f4f4f4;
+}
+
+.profile-section table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #008000;
+    color: white;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+footer p {
+    margin: 0;
+}
