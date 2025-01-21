@@ -1,10 +1,7 @@
 <?php
 session_start();
 include 'db.php';
-if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] != 3) {
-    header('Location: index.php');
-    exit();
-}
+
 // Pobranie tabeli z parametru GET lub POST
 $table = isset($_GET['table']) ? $_GET['table'] : '';
 $id_field = "ID_" . ucfirst($table); // Automatyczne określenie pola ID (np. "ID_Produkt")

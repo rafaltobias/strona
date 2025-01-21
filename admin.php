@@ -1,9 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] != 3) {
-    header('Location: index.php');
-    exit();
-}
+// Lista tabel w projekcie
 $tabele = [
     "Produkty" => "admin_produkty.php",
     "Zamówienia" => "admin_zamowienia.php",

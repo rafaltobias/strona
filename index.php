@@ -7,9 +7,37 @@ $is_logged_in = isset($_SESSION['ID_Uzytkownika']);
 $user_name = $is_logged_in ? $_SESSION['Imie'] : '';
 $ID_Uprawnienia = $is_logged_in ? $_SESSION['ID_Uprawnienia'] : 0;
 
+// Pobieranie dostępnych kategorii z bazy danych
+$category_query = "SELECT ID_Kategorii, Nazwa_Kategorii FROM Kategoria_produktow";
+$category_result = sqlsrv_query($conn, $category_query);
+
+if ($category_result === false) {
+    die(print_r(sqlsrv_errors(), true));
+}
+
+$categories = [];
+while ($category_row = sqlsrv_fetch_array($category_result, SQLSRV_FETCH_ASSOC)) {
+    $categories[] = $category_row;
+}
+
 // Pobieranie produktów z bazy danych
-$query = "SELECT TOP 3 * FROM Produkt ORDER BY ID_Produktu"; // Pobierz tylko 3 produkty
-$result = sqlsrv_query($conn, $query);
+$search_query = '';
+$category_filter = '';
+$params = [];
+
+if (isset($_GET['search'])) {
+    $search_query = $_GET['search'];
+    $query = "SELECT * FROM Produkt WHERE Nazwa_Produktu LIKE ? ORDER BY ID_Produktu";
+    $params[] = "%$search_query%";
+} elseif (isset($_GET['category'])) {
+    $category_filter = $_GET['category'];
+    $query = "SELECT * FROM Produkt WHERE ID_Kategorii = ? ORDER BY ID_Produktu";
+    $params[] = $category_filter;
+} else {
+    $query = "SELECT TOP 3 * FROM Produkt ORDER BY ID_Produktu"; // Pobierz tylko 3 produkty
+}
+
+$result = sqlsrv_query($conn, $query, $params);
 
 if ($result === false) {
     die(print_r(sqlsrv_errors(), true));
@@ -69,14 +97,41 @@ if ($result === false) {
     .admin-panel {
       margin-left: 10px;
     }
+    .product-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .product {
+      background-color: white;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      flex: 1 1 calc(33.333% - 20px);
+    }
+    .product img {
+      max-width: 100%;
+      height: auto;
+    }
+    .product h3 {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+    .product p {
+      margin: 5px 0;
+      color: #333;
+    }
   </style>
 </head>
 <body>
   <header class="header">
     <div class="logo">TECHHOUSE</div>
     <div class="search-bar">
-      <input type="text" placeholder="Wyszukaj w sklepie">
-      <button>Szukaj</button>
+      <form method="GET" action="">
+        <input type="text" name="search" placeholder="Wyszukaj w sklepie" value="<?= htmlspecialchars($search_query) ?>">
+        <button type="submit">Szukaj</button>
+      </form>
     </div>
     <div class="user-menu">
       <?php if ($is_logged_in): ?>
@@ -105,12 +160,17 @@ if ($result === false) {
     <section class="content">
       <aside class="sidebar">
         <h2>Produkty</h2>
-        <ul>
-          <li><input type="checkbox"> TV, audio i RTV</li>
-          <li><input type="checkbox"> AGD</li>
-          <li><input type="checkbox"> AGD do zabudowy</li>
-          <li><input type="checkbox"> AGD małe</li>
-        </ul>
+        <form method="GET" action="">
+          <ul>
+            <?php foreach ($categories as $category): ?>
+              <li>
+                <input type="checkbox" name="category" value="<?= $category['ID_Kategorii'] ?>" <?= $category_filter == $category['ID_Kategorii'] ? 'checked' : '' ?>>
+                <?= htmlspecialchars($category['Nazwa_Kategorii']) ?>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+          <button type="submit">Filtruj</button>
+        </form>
       </aside>
 
       <div class="products">
@@ -125,29 +185,6 @@ if ($result === false) {
               <a href="product.php?id=<?= htmlspecialchars($row['ID_Produktu']) ?>">Zobacz produkt</a>
             </div>
           <?php endwhile; ?>
-
-          <!-- Sztywne produkty (dla testów) -->
-          <div class="product">
-            <img src="https://via.placeholder.com/150" alt="JBL Speaker">
-            <h3>Głośnik mobilny JBL Go4 Czarny</h3>
-            <p>⭐⭐⭐⭐⭐</p>
-            <p>199.99 zł</p>
-            <a href="product.php?id=1">Zobacz produkt</a>
-          </div>
-          <div class="product">
-            <img src="https://via.placeholder.com/150" alt="JBL Speaker">
-            <h3>Głośnik mobilny JBL Go4 Czarny</h3>
-            <p>⭐⭐⭐⭐⭐</p>
-            <p>199.99 zł</p>
-            <a href="product.php?id=2">Zobacz produkt</a>
-          </div>
-          <div class="product">
-            <img src="https://via.placeholder.com/150" alt="JBL Speaker">
-            <h3>Głośnik mobilny JBL Go4 Czarny</h3>
-            <p>⭐⭐⭐⭐⭐</p>
-            <p>199.99 zł</p>
-            <a href="product.php?id=3">Zobacz produkt</a>
-          </div>
         </div>
       </div>
     </section>

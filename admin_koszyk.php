@@ -1,10 +1,7 @@
 <?php
 session_start();
 include 'db.php'; // Połączenie z bazą danych
-if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] != 3) {
-    header('Location: index.php');
-    exit();
-}
+
 // Obsługa usuwania rekordu
 if (isset($_GET['delete_id'])) {
     $delete_id = $_GET['delete_id'];
