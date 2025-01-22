@@ -77,6 +77,6 @@ if (!$order) {
         </tbody>
     </table>
 
-    <a href="orders.php">Powrót do zamówień</a>
+    <a href="zamowienia.php">Powrót do zamówień</a>
 </body>
 </html>

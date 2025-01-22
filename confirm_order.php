@@ -62,8 +62,9 @@ if (count($products) === 0) {
     exit;
 }
 
-// Zapisanie zamówienia
+// Zapisanie zamówienia z OUTPUT INSERTED, aby pobrać ID nowego zamówienia
 $order_query = "INSERT INTO Zamowienie (ID_Uzytkownika, Data_Zlozenia, Status, Laczna_Kwota)
+                OUTPUT INSERTED.ID_Zamowienia
                 VALUES (?, GETDATE(), 'Nowe', ?)";
 
 $order_params = [$id_uzytkownika, $total_amount];
@@ -77,7 +78,8 @@ if ($order_stmt === false) {
 sqlsrv_execute($order_stmt);
 
 // Pobranie ID nowo utworzonego zamówienia
-$order_id = sqlsrv_fetch_array(sqlsrv_query($conn, "SELECT SCOPE_IDENTITY() AS order_id"), SQLSRV_FETCH_ASSOC)['order_id'];
+$order_id_row = sqlsrv_fetch_array($order_stmt, SQLSRV_FETCH_ASSOC);
+$order_id = $order_id_row['ID_Zamowienia'];
 
 // Przypisanie produktów do zamówienia
 foreach ($products as $product) {
@@ -110,4 +112,5 @@ sqlsrv_execute($clear_cart_stmt);
 sqlsrv_commit($conn);
 
 echo "Twoje zamówienie zostało złożone pomyślnie!";
+echo "ID Zamówienia: " . $order_id;
 ?>
