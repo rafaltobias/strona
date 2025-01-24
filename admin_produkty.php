@@ -83,15 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($errors[0]['code']) && $errors[0]['code'] == 547) {
                 $error_message = "Nie można usunąć produktu, ponieważ jest powiązany z zamówieniami.";
             } else {
-                
+                $error_message = "Błąd podczas usuwania produktu.";
             }
         } else {
-            die(print_r(sqlsrv_errors(), true));
-           
+            $success_message = "Produkt został pomyślnie usunięty.";
         }
-        $success_message = "Produkt został pomyślnie usunięty.";
-    
-    
     } elseif (isset($_POST['deactivate'])) {
         $id_produktu = $_POST['id_produktu'];
         $query = "UPDATE Produkt SET Aktywny = 0 WHERE ID_Produktu = ?";
@@ -129,7 +125,6 @@ if ($result === false) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Produkty</title>
     <link rel="stylesheet" href="css/admin_panel.css">
-    
 </head>
 <body>
     <header class="header">
@@ -142,7 +137,6 @@ if ($result === false) {
         <?php if ($success_message): ?>
             <div class="alert alert-success"><?php echo $success_message; ?></div>
         <?php endif; ?>
-        
 
         <!-- Formularz wyszukiwania produktów -->
         <div class="form-container">
@@ -160,10 +154,10 @@ if ($result === false) {
                 <input type="text" id="nazwa_produktu" name="nazwa_produktu" required>
                 
                 <label for="cena">Cena:</label>
-                <input type="text" id="cena" name="cena" required>
+                <input type="number" id="cena" name="cena" required>
                 
                 <label for="stan_magazynowy">Stan Magazynowy:</label>
-                <input type="text" id="stan_magazynowy" name="stan_magazynowy" required>
+                <input type="number" id="stan_magazynowy" name="stan_magazynowy" required>
                 
                 <label for="id_kategorii">ID Kategorii:</label>
                 <select id="id_kategorii" name="id_kategorii" required>
@@ -182,6 +176,7 @@ if ($result === false) {
         </div>
 
         <!-- Tabela produktów -->
+        <h2>Lista produktów</h2>
         <table>
             <thead>
                 <tr>
@@ -201,8 +196,8 @@ if ($result === false) {
                     <form method="post">
                         <td><?php echo $row['ID_Produktu']; ?></td>
                         <td><input type="text" name="nazwa_produktu" value="<?php echo $row['Nazwa_Produktu']; ?>" required></td>
-                        <td><input type="text" name="cena" value="<?php echo $row['Cena']; ?>" required></td>
-                        <td><input type="text" name="stan_magazynowy" value="<?php echo $row['Stan_Magazynowy']; ?>" required></td>
+                        <td><input type="number" name="cena" value="<?php echo $row['Cena']; ?>" required></td>
+                        <td><input type="number" name="stan_magazynowy" value="<?php echo $row['Stan_Magazynowy']; ?>" required></td>
                         <td>
                             <select name="id_kategorii" required>
                                 <?php foreach ($categories as $category): ?>
@@ -229,12 +224,9 @@ if ($result === false) {
                 <?php endwhile; ?>
             </tbody>
         </table>
-
         
-
         <br>
         <a href="admin.php"><button>Powrót do panelu admina</button></a>
     </main>
 </body>
 </html>
-

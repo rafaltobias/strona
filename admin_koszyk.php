@@ -2,15 +2,18 @@
 session_start();
 include 'db.php'; // Połączenie z bazą danych
 
+$error_message = ""; // Zmienna na komunikaty błędów
+$success_message = ""; // Zmienna na komunikaty sukcesu
+
 // Obsługa usuwania rekordu
-if (isset($_GET['delete_id'])) {
-    $delete_id = $_GET['delete_id'];
+if (isset($_POST['delete_id'])) {
+    $delete_id = $_POST['delete_id'];
     $query = "DELETE FROM Koszyk WHERE ID_Koszyka = ?";
     $stmt = sqlsrv_prepare($conn, $query, [$delete_id]);
     if (sqlsrv_execute($stmt)) {
-        echo "Rekord usunięty.";
+        $success_message = "Rekord usunięty.";
     } else {
-        echo "Błąd podczas usuwania.";
+        $error_message = "Błąd podczas usuwania.";
     }
 }
 
@@ -19,12 +22,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     $id_uzytkownika = $_POST['ID_Uzytkownika'];
     $data_utworzenia = $_POST['Data_Utworzenia'];
 
-    $query = "INSERT INTO Koszyk (ID_Uzytkownika, Data_Utworzenia) VALUES (?, ?)";
-    $stmt = sqlsrv_prepare($conn, $query, [$id_uzytkownika, $data_utworzenia]);
-    if (sqlsrv_execute($stmt)) {
-        echo "Rekord dodany.";
+    // Walidacja danych
+    if (!is_numeric($id_uzytkownika) || empty($data_utworzenia)) {
+        $error_message = "ID Użytkownika musi być liczbą, a Data Utworzenia nie może być pusta.";
     } else {
-        echo "Błąd podczas dodawania.";
+        $query = "INSERT INTO Koszyk (ID_Uzytkownika, Data_Utworzenia) VALUES (?, ?)";
+        $stmt = sqlsrv_prepare($conn, $query, [$id_uzytkownika, $data_utworzenia]);
+        if (sqlsrv_execute($stmt)) {
+            $success_message = "Rekord dodany.";
+        } else {
+            $error_message = "Błąd podczas dodawania.";
+        }
+    }
+}
+
+// Obsługa aktualizacji rekordu
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
+    $id_koszyka = $_POST['ID_Koszyka'];
+    $id_uzytkownika = $_POST['ID_Uzytkownika'];
+    $data_utworzenia = $_POST['Data_Utworzenia'];
+
+    // Walidacja danych
+    if (!is_numeric($id_uzytkownika) || empty($data_utworzenia)) {
+        $error_message = "ID Użytkownika musi być liczbą, a Data Utworzenia nie może być pusta.";
+    } else {
+        $query = "UPDATE Koszyk SET ID_Uzytkownika = ?, Data_Utworzenia = ? WHERE ID_Koszyka = ?";
+        $stmt = sqlsrv_prepare($conn, $query, [$id_uzytkownika, $data_utworzenia, $id_koszyka]);
+        if (sqlsrv_execute($stmt)) {
+            $success_message = "Rekord zaktualizowany.";
+        } else {
+            $error_message = "Błąd podczas aktualizacji.";
+        }
     }
 }
 ?>
@@ -35,43 +63,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Koszyk</title>
+    <link rel="stylesheet" href="css/admin_panel.css"> <!-- Dodaj styl CSS -->
 </head>
 <body>
-    <h1>Koszyk</h1>
-    <form method="POST">
-        <label>ID Użytkownika: <input type="text" name="ID_Uzytkownika"></label><br>
-        <label>Data Utworzenia: <input type="datetime-local" name="Data_Utworzenia"></label><br>
-        <button type="submit" name="add">Dodaj</button>
-    </form>
+    <header class="header">
+        <?php include "admin_header.php"; ?>
+    </header>
+    
+    <main>
+        <h1>Panel Koszyka</h1>
 
-    <h2>Lista koszyków</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID Koszyka</th>
-                <th>ID Użytkownika</th>
-                <th>Data Utworzenia</th>
-                <th>Akcje</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php
-            $query = "SELECT * FROM Koszyk";
-            $result = sqlsrv_query($conn, $query);
-            while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) {
-                echo "<tr>
-                        <td>{$row['ID_Koszyka']}</td>
-                        <td>{$row['ID_Uzytkownika']}</td>
-                        <td>{$row['Data_Utworzenia']->format('Y-m-d H:i:s')}</td>
-                        <td>
-                            <a href='koszyk.php?delete_id={$row['ID_Koszyka']}'>Usuń</a>
-                        </td>
-                    </tr>";
-            }
-            ?>
-        </tbody>
-    </table>
-    <br>
-    <a href="admin.php"><button>Powrót do panelu admina</button></a>
+        <!-- Komunikaty o błędach i sukcesie -->
+        <?php if ($error_message): ?>
+            <div class="alert alert-error"><?php echo $error_message; ?></div>
+        <?php endif; ?>
+        <?php if ($success_message): ?>
+            <div class="alert alert-success"><?php echo $success_message; ?></div>
+        <?php endif; ?>
+
+        <!-- Formularz dodawania nowego rekordu -->
+        <h2>Dodaj nowy koszyk</h2>
+        <div class="form-container">
+            <form method="POST">
+                <label>ID Użytkownika:</label>
+                <input type="text" name="ID_Uzytkownika" required>
+                
+                <label>Data Utworzenia:</label>
+                <input type="datetime-local" name="Data_Utworzenia" required>
+                
+                <button type="submit" name="add">Dodaj</button>
+            </form>
+        </div>
+
+        <!-- Tabela koszyków -->
+        <h2>Lista Koszyków</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Koszyka</th>
+                    <th>ID Użytkownika</th>
+                    <th>Data Utworzenia</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $query = "SELECT * FROM Koszyk";
+                $result = sqlsrv_query($conn, $query);
+                while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) {
+                    ?>
+                    <form method="POST">
+                        <tr>
+                            <td><input type="text" name="ID_Koszyka" value="<?php echo $row['ID_Koszyka']; ?>" readonly></td>
+                            <td><input type="text" name="ID_Uzytkownika" value="<?php echo $row['ID_Uzytkownika']; ?>" required></td>
+                            <td><input type="datetime-local" name="Data_Utworzenia" value="<?php echo $row['Data_Utworzenia']->format('Y-m-d\TH:i'); ?>" required></td>
+                            <td>
+                                <button type="submit" name="update">Zaktualizuj</button>
+                                <button type="submit" name="delete_id" value="<?php echo $row['ID_Koszyka']; ?>" onclick="return confirm('Czy na pewno chcesz usunąć ten koszyk?')">Usuń</button>
+                            </td>
+                        </tr>
+                    </form>
+                    <?php
+                }
+                ?>
+            </tbody>
+        </table>
+
+        <br>
+        <a href="admin.php"><button>Powrót do panelu admina</button></a>
+    </main>
 </body>
 </html>
