@@ -27,14 +27,14 @@ $params = [];
 
 if (isset($_GET['search'])) {
     $search_query = $_GET['search'];
-    $query = "SELECT * FROM Produkt WHERE Nazwa_Produktu LIKE ? ORDER BY ID_Produktu";
+    $query = "SELECT * FROM Produkt WHERE Nazwa_Produktu LIKE ? AND Aktywny = 1 ORDER BY ID_Produktu";
     $params[] = "%$search_query%";
 } elseif (isset($_GET['category'])) {
     $category_filter = $_GET['category'];
-    $query = "SELECT * FROM Produkt WHERE ID_Kategorii = ? ORDER BY ID_Produktu";
+    $query = "SELECT * FROM Produkt WHERE ID_Kategorii = ?  AND Aktywny = 1  ORDER BY ID_Produktu";
     $params[] = $category_filter;
 } else {
-    $query = "SELECT TOP 3 * FROM Produkt ORDER BY ID_Produktu"; // Pobierz tylko 3 produkty
+    $query = "SELECT TOP 3 * FROM Produkt WHERE Aktywny = 1 ORDER BY ID_Produktu"; // Pobierz tylko 3 produkty
 }
 
 $result = sqlsrv_query($conn, $query, $params);

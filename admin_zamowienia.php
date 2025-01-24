@@ -35,13 +35,18 @@ if (isset($_POST['add'])) {
 if (isset($_GET['delete'])) {
     $id_value = $_GET['delete'];
 
-    $sql = "DELETE FROM Zamowienie WHERE ID_Zamowienia = ?";
+    // Usuwanie powiązanych produktów w tabeli Zamowienie_Produkt
+    $sql = "DELETE FROM Zamowienie_Produkt WHERE ID_Zamowienia = ?";
     $params = [$id_value];
-
     $stmt = sqlsrv_query($conn, $sql, $params);
     if ($stmt === false) die(print_r(sqlsrv_errors(), true));
 
-    header("Location: admin.php?table=$table");
+    // Usuwanie zamówienia
+    $sql = "DELETE FROM Zamowienie WHERE ID_Zamowienia = ?";
+    $stmt = sqlsrv_query($conn, $sql, $params);
+    if ($stmt === false) die(print_r(sqlsrv_errors(), true));
+
+    header("Location: admin_zamowienia.php");
     exit();
 }
 
@@ -70,9 +75,19 @@ if (isset($_POST['update'])) {
     exit();
 }
 
-// Pobranie danych zamówień z bazy
-$query = "SELECT * FROM Zamowienie";
-$result = sqlsrv_query($conn, $query);
+// Wyszukiwanie zamówień
+$search_query = '';
+if (isset($_GET['search'])) {
+    $search = $_GET['search'];
+    $search_query = " WHERE ID_Zamowienia LIKE ? OR ID_Uzytkownika LIKE ? OR Status LIKE ?";
+}
+
+$query = "SELECT * FROM Zamowienie" . $search_query;
+$params = [];
+if ($search_query) {
+    $params = ["%$search%", "%$search%", "%$search%"];
+}
+$result = sqlsrv_query($conn, $query, $params);
 
 if ($result === false) {
     die(print_r(sqlsrv_errors(), true));
@@ -101,6 +116,14 @@ if ($result === false) {
 <body>
     <h1>Panel Administratora - Zamówienia</h1>
 
+    <!-- Formularz wyszukiwania -->
+    <div class="form-container">
+        <form method="GET">
+            <input type="text" name="search" placeholder="Wyszukaj..." value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>">
+            <button type="submit">Szukaj</button>
+        </form>
+    </div>
+
     <!-- Formularz dodawania zamówienia -->
     <div class="form-container">
         <form method="POST">
@@ -127,15 +150,18 @@ if ($result === false) {
         <tbody>
             <?php while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)): ?>
             <tr>
-                <td><?= $row['ID_Zamowienia'] ?></td>
-                <td><?= $row['ID_Uzytkownika'] ?></td>
-                <td><?= $row['Data_Zlozenia']->format('Y-m-d H:i:s') ?></td>
-                <td><?= htmlspecialchars($row['Status']) ?></td>
-                <td><?= number_format($row['Laczna_Kwota'], 2) ?> zł</td>
-                <td>
-                    <a href="edit.php?table=Zamowienie&id=<?= htmlspecialchars($row['ID_Zamowienia']) ?>">Edytuj</a>
-                    <a href="?delete=<?= htmlspecialchars($row['ID_Zamowienia']) ?>" onclick="return confirm('Na pewno usunąć?')">Usuń</a>
-                </td>
+                <form method="POST">
+                    <td><?= $row['ID_Zamowienia'] ?></td>
+                    <td><input type="number" name="ID_Uzytkownika" value="<?= $row['ID_Uzytkownika'] ?>" required></td>
+                    <td><input type="datetime-local" name="Data_Zlozenia" value="<?= $row['Data_Zlozenia']->format('Y-m-d\TH:i:s') ?>" required></td>
+                    <td><input type="text" name="Status" value="<?= htmlspecialchars($row['Status']) ?>" required></td>
+                    <td><input type="number" name="Laczna_Kwota" value="<?= $row['Laczna_Kwota'] ?>" step="0.01" required></td>
+                    <td>
+                        <button type="submit" name="update">Zaktualizuj</button>
+                        <a href="?delete=<?= htmlspecialchars($row['ID_Zamowienia']) ?>" onclick="return confirm('Na pewno usunąć?')">Usuń</a>
+                    </td>
+                    <input type="hidden" name="ID_Zamowienia" value="<?= $row['ID_Zamowienia'] ?>">
+                </form>
             </tr>
             <?php endwhile; ?>
         </tbody>
