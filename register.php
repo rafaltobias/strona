@@ -1,22 +1,21 @@
 <?php
 session_start();
-include 'db.php'; // Plik z połączeniem do bazy danych
+include 'db.php'; 
 
 // Sprawdzanie, czy formularz został wysłany
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Pobieranie danych z formularza
     $imie = $_POST['Imie'] ?? '';
     $nazwisko = $_POST['Nazwisko'] ?? '';
     $email = $_POST['Email'] ?? '';
     $haslo = $_POST['Haslo'] ?? '';
     $adres = $_POST['Adres'] ?? '';
-    $id_uprawnienia = 1; // Zakładam, że nowy użytkownik ma uprawnienie 1 (standardowe)
 
     // Walidacja formularza
     if (!$imie || !$nazwisko || !$email || !$haslo || !$adres) {
         echo "Wszystkie pola muszą być wypełnione!";
+
     } else {
-        // Sprawdzanie, czy użytkownik o danym emailu już istnieje
+        // Sprawdzanie, czy użytkownik o podanym emailu już istnieje
         $checkEmailQuery = "SELECT * FROM Uzytkownik WHERE Email = ?";
         $checkEmailStmt = sqlsrv_prepare($conn, $checkEmailQuery, [$email]);
 
@@ -30,13 +29,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($existingUser) {
             echo "Użytkownik z takim adresem email już istnieje!";
         } else {
-            // Hashowanie hasła
-            $hashedPassword = password_hash($haslo, PASSWORD_DEFAULT);
-
-            // Dodanie nowego użytkownika do bazy
-            $query = "INSERT INTO Uzytkownik (Imie, Nazwisko, Email, Haslo, Adres, ID_Uprawnienia) 
-                      VALUES (?, ?, ?, ?, ?, ?)";
-            $params = [$imie, $nazwisko, $email, $hashedPassword, $adres, $id_uprawnienia];
+            // Hashowanie hasła w zapytaniu SQL
+            $query = "
+                INSERT INTO Uzytkownik (Imie, Nazwisko, Email, Haslo, Adres, ID_Uprawnienia)
+                VALUES (?, ?, ?, HASHBYTES('SHA2_256', ?), ?, ?)";
+            $params = [$imie, $nazwisko, $email, $haslo, $adres, 1]; // Domyślnie uprawnienie = 1
 
             $stmt = sqlsrv_prepare($conn, $query, $params);
             if ($stmt === false) {
@@ -49,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'Imie' => $imie,
                     'Nazwisko' => $nazwisko,
                     'Email' => $email,
-                    'ID_Uprawnienia' => $id_uprawnienia
+                    'ID_Uprawnienia' => 1
                 ];
 
                 // Przekierowanie na stronę główną
@@ -69,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Zamknięcie połączenia z bazą danych
 sqlsrv_close($conn);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pl">

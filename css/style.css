@@ -119,3 +119,35 @@ body {
   margin: 5px 0;
   color: #333;
 }
+
+.alert {
+  padding: 15px;
+  background-color: #f44336; /* Czerwony kolor dla błędu */
+  color: white;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  font-family: Arial, sans-serif;
+}
+
+.alert.success {
+  background-color: #4CAF50; /* Zielony kolor dla sukcesu */
+}
+
+.alert.warning {
+  background-color: #ff9800; /* Pomarańczowy kolor dla ostrzeżenia */
+}
+
+.alert .close-btn {
+  margin-left: 15px;
+  color: white;
+  font-weight: bold;
+  float: right;
+  font-size: 22px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.alert .close-btn:hover {
+  color: black;
+}

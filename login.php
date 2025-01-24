@@ -1,10 +1,9 @@
 <?php
 session_start();
-include 'db.php'; // Połączenie z bazą danych
+include 'db.php'; 
 
 // Sprawdzanie, czy formularz został wysłany
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Pobieranie danych z formularza
     $email = $_POST['Email'] ?? '';
     $haslo = $_POST['Haslo'] ?? '';
 
@@ -12,9 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$email || !$haslo) {
         echo "Wszystkie pola muszą być wypełnione!";
     } else {
-        // Sprawdzanie, czy użytkownik o danym emailu istnieje
-        $query = "SELECT * FROM Uzytkownik WHERE Email = ?";
-        $stmt = sqlsrv_prepare($conn, $query, [$email]);
+        // Zapytanie do bazy, aby sprawdzić, czy użytkownik istnieje
+        $query = "SELECT * FROM Uzytkownik WHERE Email = ? AND Haslo = HASHBYTES('SHA2_256', ?)";
+        $stmt = sqlsrv_prepare($conn, $query, [$email, $haslo]);
 
         if ($stmt === false) {
             die(print_r(sqlsrv_errors(), true));
@@ -24,33 +23,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
 
         if ($user) {
-            // Sprawdzanie, czy podane hasło pasuje do hasła przechowywanego w bazie
-            if (password_verify($haslo, $user['Haslo'])) {
-                // Użytkownik zalogowany - zapisujemy dane w sesji
-                $_SESSION['ID_Uzytkownika'] = $user['ID_Uzytkownika'];
-                $_SESSION['Email'] = $user['Email'];
-                $_SESSION['Imie'] = $user['Imie'];
-                $_SESSION['Nazwisko'] = $user['Nazwisko'];
-                $_SESSION['Adres'] = $user['Adres'];
-                $_SESSION['ID_Uprawnienia'] = $user['ID_Uprawnienia'];
+            // Ustawienie sesji użytkownika
+            $_SESSION['ID_Uzytkownika'] = $user['ID_Uzytkownika'];
+            $_SESSION['Email'] = $user['Email'];
+            $_SESSION['Imie'] = $user['Imie'];
+            $_SESSION['Nazwisko'] = $user['Nazwisko'];
+            $_SESSION['Adres'] = $user['Adres'];
+            $_SESSION['ID_Uprawnienia'] = $user['ID_Uprawnienia'];
 
-                // Przekierowanie na stronę po zalogowaniu
-                header("Location: index.php");
-                exit;
-            } else {
-                echo "Niepoprawne hasło!";
-            }
+            // Przekierowanie na stronę główną
+            header("Location: index.php");
+            exit;
         } else {
-            echo "Użytkownik o podanym emailu nie istnieje!";
+            echo "Niepoprawne dane logowania!";
         }
 
         sqlsrv_free_stmt($stmt);
     }
 }
 
-// Zamknięcie połączenia z bazą danych
 sqlsrv_close($conn);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pl">
