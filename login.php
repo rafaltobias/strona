@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Walidacja formularza
     if (!$email || !$haslo) {
-        echo "Wszystkie pola muszą być wypełnione!";
+        echo "<p class='error'>Wszystkie pola muszą być wypełnione!</p>";
     } else {
         // Zapytanie do bazy, aby sprawdzić, czy użytkownik istnieje
         $query = "SELECT * FROM Uzytkownik WHERE Email = ? AND Haslo = HASHBYTES('SHA2_256', ?)";
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header("Location: index.php");
             exit;
         } else {
-            echo "Niepoprawne dane logowania!";
+            echo "<p class='error'>Niepoprawne dane logowania!</p>";
         }
 
         sqlsrv_free_stmt($stmt);
@@ -45,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 sqlsrv_close($conn);
 ?>
 
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -53,22 +52,86 @@ sqlsrv_close($conn);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logowanie</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background-color: #ffffff;
+            color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-container h1 {
+            margin-bottom: 20px;
+            color: #008000;
+        }
+        .login-container label {
+            display: block;
+            margin: 10px 0 5px;
+            text-align: left;
+        }
+        .login-container input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .login-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #008000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .login-container button:hover {
+            background-color: #006400;
+        }
+        .register-link {
+            display: block;
+            margin-top: 15px;
+            color: #008000;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .register-link:hover {
+            text-decoration: underline;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <header>
+    <div class="login-container">
         <h1>Logowanie</h1>
-    </header>
-
-    <main>
         <form method="POST" action="">
             <label for="Email">Email:</label>
-            <input type="email" name="Email" required>
+            <input type="email" id="Email" name="Email" required>
 
             <label for="Haslo">Hasło:</label>
-            <input type="password" name="Haslo" required>
+            <input type="password" id="Haslo" name="Haslo" required>
 
             <button type="submit">Zaloguj się</button>
         </form>
-    </main>
+        <a href="register.php" class="register-link">Nie masz konta? Zarejestruj się</a>
+    </div>
 </body>
 </html>

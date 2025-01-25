@@ -43,6 +43,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
         }
 
+        // Pobranie stanu magazynowego produktu
+        $stock_query = "SELECT Stan_Magazynowy FROM Produkt WHERE ID_Produktu = ?";
+        $stock_stmt = sqlsrv_prepare($conn, $stock_query, [$product_id]);
+        if ($stock_stmt === false) {
+            echo json_encode(['error' => sqlsrv_errors()]);
+            exit;
+        }
+
+        sqlsrv_execute($stock_stmt);
+        $stock_row = sqlsrv_fetch_array($stock_stmt, SQLSRV_FETCH_ASSOC);
+        $available_stock = $stock_row['Stan_Magazynowy'];
+
+        // Jeśli zapytana ilość jest większa niż dostępny stan magazynowy, ustaw maksymalną ilość
+        if ($quantity > $available_stock) {
+            $quantity = $available_stock;
+            $message = "Dostępny stan magazynowy wynosi tylko $available_stock. Ilość w koszyku została zaktualizowana.";
+        }
+
         // Aktualizacja ilości produktu w koszyku
         $update_query = "UPDATE Koszyk_Produkt SET Ilosc = ? WHERE ID_Koszyka = ? AND ID_Produktu = ?";
         $update_params = [$quantity, $koszyk_id, $product_id];
@@ -54,7 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
 
         sqlsrv_execute($update_stmt);
-        echo json_encode(['success' => true]);
+        echo json_encode([
+            'success' => true,
+            'message' => $message ?? "Ilość produktu została zaktualizowana."
+        ]);
         exit;
     } elseif ($action === 'delete_product') {
         // Usunięcie produktu z koszyka
@@ -179,7 +200,8 @@ while ($row = sqlsrv_fetch_array($stmt_products, SQLSRV_FETCH_ASSOC)) {
             }, function(response) {
                 const result = JSON.parse(response);
                 if (result.success) {
-                    location.reload(); // Odświeżanie strony
+                    alert(result.message || 'Ilość została zaktualizowana.');
+                    location.reload(); // Odświeżenie strony
                 } else {
                     alert(result.error);
                 }

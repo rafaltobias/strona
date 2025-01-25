@@ -74,32 +74,90 @@ sqlsrv_close($conn);
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rejestracja</title>
-  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #ffffff;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .register-container {
+      background-color: #ffffff;
+      color: #333;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+    .register-container h1 {
+      margin-bottom: 20px;
+      color: #008000;
+    }
+    .register-container label {
+      display: block;
+      margin: 10px 0 5px;
+      text-align: left;
+    }
+    .register-container input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .register-container button {
+      width: 100%;
+      padding: 10px;
+      background-color: #008000;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .register-container button:hover {
+      background-color: #006400;
+    }
+    .login-link {
+      display: block;
+      margin-top: 15px;
+      color: #008000;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .login-link:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <header>
+  <div class="register-container">
     <h1>Rejestracja</h1>
-  </header>
-
-  <main>
     <form method="POST" action="">
       <label for="Imie">Imię:</label>
-      <input type="text" name="Imie" required>
+      <input type="text" id="Imie" name="Imie" required>
 
       <label for="Nazwisko">Nazwisko:</label>
-      <input type="text" name="Nazwisko" required>
+      <input type="text" id="Nazwisko" name="Nazwisko" required>
 
       <label for="Email">Email:</label>
-      <input type="email" name="Email" required>
+      <input type="email" id="Email" name="Email" required>
 
       <label for="Haslo">Hasło:</label>
-      <input type="password" name="Haslo" required>
+      <input type="password" id="Haslo" name="Haslo" required>
 
       <label for="Adres">Adres:</label>
-      <input type="text" name="Adres" required>
+      <input type="text" id="Adres" name="Adres" required>
 
       <button type="submit">Zarejestruj się</button>
     </form>
-  </main>
+    <a href="login.php" class="login-link">Masz już konto? Zaloguj się</a>
+  </div>
 </body>
 </html>

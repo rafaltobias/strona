@@ -111,6 +111,122 @@ sqlsrv_execute($clear_cart_stmt);
 // Zatwierdzamy transakcję
 sqlsrv_commit($conn);
 
-echo "Twoje zamówienie zostało złożone pomyślnie!";
-echo "ID Zamówienia: " . $order_id;
 ?>
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Potwierdzenie Zamówienia</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link do pliku CSS -->
+</head>
+<body>
+    <header>
+        <div class="logo">TechHouse</div>
+        <nav class="user-menu">
+            <a href="index.php">Strona Główna</a>
+            <a href="cart.php">Koszyk</a>
+            <a href="logout.php">Wyloguj</a>
+        </nav>
+        <style>/* Globalne ustawienia */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #008000;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+header .logo {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+header .user-menu a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+}
+
+header .user-menu a:hover {
+    text-decoration: underline;
+}
+
+/* Sekcja potwierdzenia zamówienia */
+.order-confirmation {
+    padding: 40px;
+    margin: 0 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.order-confirmation h1 {
+    font-size: 28px;
+    color: #333;
+}
+
+.order-confirmation p {
+    font-size: 18px;
+    color: #555;
+    margin: 10px 0;
+}
+
+.order-confirmation .btn {
+    display: inline-block;
+    margin: 10px 15px;
+    padding: 10px 20px;
+    background-color: #008000;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.order-confirmation .btn:hover {
+    background-color: #006400;
+}
+
+/* Sekcja stopki */
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #008000;
+    color: white;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+footer p {
+    margin: 0;
+}
+</style>
+    </header>
+
+    <main>
+        <section class="order-confirmation">
+            <h1>Potwierdzenie Zamówienia</h1>
+            <p>Twoje zamówienie zostało złożone pomyślnie!</p>
+        
+            <p><strong>Łączna Kwota:</strong> <?= number_format($total_amount, 2) ?> zł</p>
+
+            <p>Chcesz kontynuować zakupy?</p>
+            <a href="index.php" class="btn">Powróć do sklepu</a>
+            <a href="cart.php" class="btn">Zobacz Koszyk</a>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TechHouse. Wszelkie prawa zastrzeżone.</p>
+    </footer>
+</body>
+</html>
