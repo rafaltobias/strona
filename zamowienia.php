@@ -50,7 +50,6 @@ while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
                 <table class="orders-table">
                     <thead>
                         <tr>
-                            <th>ID Zamówienia</th>
                             <th>Data Złożenia</th>
                             <th>Status</th>
                             <th>Łączna Kwota</th>
@@ -60,7 +59,6 @@ while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
                     <tbody>
                         <?php foreach ($orders as $order): ?>
                             <tr>
-                                <td><?= htmlspecialchars($order['ID_Zamowienia']) ?></td>
                                 <td><?= $order['Data_Zlozenia']->format('Y-m-d H:i:s') ?></td>
                                 <td><?= htmlspecialchars($order['Status']) ?></td>
                                 <td><?= number_format($order['Laczna_Kwota'], 2) ?> zł</td>

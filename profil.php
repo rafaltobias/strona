@@ -248,14 +248,17 @@ function render_change_password()
 <body>
     <div class="header">
         <div class="logo">
-            <a href="#">TechHouse</a>
-        </div>
-        <div class="user-menu">
-            <a href="?section=profile">Twój Profil</a>
-            <a href="?section=edit_profile">Edytuj Profil</a>
-            <a href="?section=change_password">Zmień Hasło</a>
+            <a href="index.php">TechHouse</a>
+
+            <nav class="user-menu">
+            <a href="index.php">Strona główna</a>
             <a href="logout.php">Wyloguj</a>
+            <a href="cart.php">Koszyk</a>
+            <a href="zamowienia.php">Zamówienia</a>
+            <a href="profil.php">Profil</a>
+        </nav>
         </div>
+        
     </div>
 
     <div class="main-container">

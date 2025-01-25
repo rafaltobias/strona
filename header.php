@@ -52,10 +52,7 @@ body {
 }
 
 /* Dodatkowe style dla pozostałej zawartości strony */
-h1 {
-    text-align: center;
-    margin: 30px 0;
-}
+
 
    </style>
 </head>
