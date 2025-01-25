@@ -125,15 +125,7 @@ while ($row = sqlsrv_fetch_array($stmt_products, SQLSRV_FETCH_ASSOC)) {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <header class="header">
-        <div class="logo">TechHouse</div>
-        <nav class="user-menu">
-            <a href="index.php">Strona główna</a>
-            <a href="logout.php">Wyloguj</a>
-            <a href="cart.php">Koszyk</a>
-            <a href="zamowienia.php">Zamówienia</a>
-        </nav>
-    </header>
+    <?php include "header.php"; ?>
 
     <main>
         <section class="cart-section">

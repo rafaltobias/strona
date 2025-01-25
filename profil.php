@@ -2,6 +2,9 @@
 session_start();
 include 'db.php'; // Połączenie z bazą danych
 
+// Zmienna dla komunikatów
+$message = '';
+
 // Sprawdzenie, czy użytkownik jest zalogowany
 if (!isset($_SESSION['ID_Uzytkownika'])) {
     header("Location: login.php"); // Jeśli użytkownik nie jest zalogowany, przekierowanie na stronę logowania
@@ -30,41 +33,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_profile'])) {
     $adres = $_POST['adres'] ?? '';
 
     if ($imie && $nazwisko && $email && $adres) {
-        $updateQuery = "UPDATE Uzytkownik SET Imie = ?, Nazwisko = ?, Email = ?, Adres = ? WHERE ID_Uzytkownika = ?";
-        $updateParams = [$imie, $nazwisko, $email, $adres, $id_uzytkownika];
-        $updateStmt = sqlsrv_query($conn, $updateQuery, $updateParams);
+        // Sprawdzenie, czy nowy email już istnieje w bazie
+        $checkEmailQuery = "SELECT COUNT(*) AS email_count FROM Uzytkownik WHERE Email = ? AND ID_Uzytkownika != ?";
+        $checkEmailParams = [$email, $id_uzytkownika];
+        $checkEmailStmt = sqlsrv_query($conn, $checkEmailQuery, $checkEmailParams);
 
-        if ($updateStmt === false) {
-            echo "Błąd podczas aktualizacji danych!";
+        if ($checkEmailStmt === false) {
+            $message = "<div class='alert alert-danger'>Błąd podczas sprawdzania emaila!</div>";
         } else {
-            echo "Dane zostały zaktualizowane!";
-            $user['Imie'] = $imie;
-            $user['Nazwisko'] = $nazwisko;
-            $user['Email'] = $email;
-            $user['Adres'] = $adres;
+            $checkEmailResult = sqlsrv_fetch_array($checkEmailStmt, SQLSRV_FETCH_ASSOC);
+            if ($checkEmailResult['email_count'] > 0) {
+                $message = "<div class='alert alert-danger'>Email jest już używany przez innego użytkownika!</div>";
+            } else {
+                // Aktualizacja danych użytkownika
+                $updateQuery = "UPDATE Uzytkownik SET Imie = ?, Nazwisko = ?, Email = ?, Adres = ? WHERE ID_Uzytkownika = ?";
+                $updateParams = [$imie, $nazwisko, $email, $adres, $id_uzytkownika];
+                $updateStmt = sqlsrv_query($conn, $updateQuery, $updateParams);
+
+                if ($updateStmt === false) {
+                    $message = "<div class='alert alert-danger'>Błąd podczas aktualizacji danych!</div>";
+                } else {
+                    $message = "<div class='alert alert-success'>Dane zostały zaktualizowane!</div>";
+                    $user['Imie'] = $imie;
+                    $user['Nazwisko'] = $nazwisko;
+                    $user['Email'] = $email;
+                    $user['Adres'] = $adres;
+                }
+            }
         }
     } else {
-        echo "Wszystkie pola muszą być wypełnione!";
-    }
-}
-
-// Obsługa zmiany hasła
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
-    $nowe_haslo = $_POST['nowe_haslo'] ?? '';
-    $potwierdz_haslo = $_POST['potwierdz_haslo'] ?? '';
-
-    if ($nowe_haslo && $potwierdz_haslo && $nowe_haslo === $potwierdz_haslo) {
-        $passwordQuery = "UPDATE Uzytkownik SET Haslo = HASHBYTES('SHA2_256', ?) WHERE ID_Uzytkownika = ?";
-        $passwordParams = [$nowe_haslo, $id_uzytkownika];
-        $passwordStmt = sqlsrv_query($conn, $passwordQuery, $passwordParams);
-
-        if ($passwordStmt === false) {
-            echo "Błąd podczas zmiany hasła!";
-        } else {
-            echo "Hasło zostało pomyślnie zmienione!";
-        }
-    } else {
-        echo "Hasła muszą być takie same i wypełnione!";
+        $message = "<div class='alert alert-warning'>Wszystkie pola muszą być wypełnione!</div>";
     }
 }
 
@@ -128,18 +126,75 @@ function render_change_password()
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Użytkownika - TechHouse</title>
     <link rel="stylesheet" href="css/global.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            display: flex;
-            font-family: Arial, sans-serif;
+        /* Stylizacja powiadomień */
+        .alert {
+            margin-top: 20px;
+            font-size: 16px;
+            border-radius: 5px;
         }
+
+        /* Stylizacja całej strony */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        /* Nagłówek */
+        .header {
+            background-color: #008000;
+            color: white;
+            padding: 10px 20px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .header .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .header .user-menu {
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+        }
+
+        .header .user-menu a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .header .user-menu a:hover {
+            text-decoration: underline;
+        }
+
+        .header .logo a {
+            text-decoration: none;
+            color: white;
+        }
+
+        /* Kontener główny */
+        .main-container {
+            display: flex;
+            margin-top: 70px; /* Odstęp po nagłówku */
+        }
+
+        /* Sidebar */
         .sidebar {
-            width: 200px;
+            width: 250px;
             background-color: #f4f4f4;
             padding: 20px;
             border-right: 1px solid #ddd;
-            height: 100vh;
         }
+
         .sidebar a {
             display: block;
             padding: 10px;
@@ -148,40 +203,86 @@ function render_change_password()
             color: #333;
             border-radius: 4px;
         }
+
         .sidebar a:hover, .sidebar a.active {
-            background-color: #007bff;
+            background-color: #008000;
             color: white;
         }
+
+        /* Zawartość */
         .content {
             flex: 1;
             padding: 20px;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        form input, form button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        form button {
+            background-color: #008000;
+            color: white;
+            cursor: pointer;
+        }
+
+        form button:hover {
+            background-color: #005700;
         }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h3>Menu</h3>
-        <a href="?section=profile" class="<?php echo $section === 'profile' ? 'active' : ''; ?>">Profil</a>
-        <a href="?section=edit_profile" class="<?php echo $section === 'edit_profile' ? 'active' : ''; ?>">Edycja Danych</a>
-        <a href="?section=change_password" class="<?php echo $section === 'change_password' ? 'active' : ''; ?>">Zmiana Hasła</a>
-        <a href="logout.php">Wyloguj</a>
+    <div class="header">
+        <div class="logo">
+            <a href="#">TechHouse</a>
+        </div>
+        <div class="user-menu">
+            <a href="?section=profile">Twój Profil</a>
+            <a href="?section=edit_profile">Edytuj Profil</a>
+            <a href="?section=change_password">Zmień Hasło</a>
+            <a href="logout.php">Wyloguj</a>
+        </div>
     </div>
-    <div class="content">
-        <?php
-        // Wyświetlenie odpowiedniej sekcji na podstawie parametru "section"
-        switch ($section) {
-            case 'edit_profile':
-                render_edit_profile($user);
-                break;
-            case 'change_password':
-                render_change_password();
-                break;
-            case 'profile':
-            default:
-                render_profile($user);
-                break;
-        }
-        ?>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <a href="?section=profile" class="<?php echo ($section === 'profile') ? 'active' : ''; ?>">Profil</a>
+            <a href="?section=edit_profile" class="<?php echo ($section === 'edit_profile') ? 'active' : ''; ?>">Edytuj Profil</a>
+            <a href="?section=change_password" class="<?php echo ($section === 'change_password') ? 'active' : ''; ?>">Zmień Hasło</a>
+        </div>
+        <div class="content">
+            <?php if ($message) echo $message; // Wyświetlanie komunikatów ?>
+            <?php
+            switch ($section) {
+                case 'edit_profile':
+                    render_edit_profile($user);
+                    break;
+                case 'change_password':
+                    render_change_password();
+                    break;
+                case 'profile':
+                default:
+                    render_profile($user);
+                    break;
+            }
+            ?>
+        </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -40,15 +40,7 @@ while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
     <link rel="stylesheet" href="css/zamowienia.css">
 </head>
 <body>
-    <header class="header">
-        <div class="logo">TechHouse</div>
-        <nav class="user-menu">
-            <a href="index.php">Strona główna</a>
-            <a href="logout.php">Wyloguj</a>
-            <a href="cart.php">Koszyk</a>
-            <a href="zamowienia.php">Zamówienia</a>
-        </nav>
-    </header>
+    <?php include "header.php";?>
 
     <main>
         <section class="orders-section">

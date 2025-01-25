@@ -81,8 +81,9 @@ sqlsrv_execute($order_stmt);
 $order_id_row = sqlsrv_fetch_array($order_stmt, SQLSRV_FETCH_ASSOC);
 $order_id = $order_id_row['ID_Zamowienia'];
 
-// Przypisanie produktów do zamówienia
+// Przypisanie produktów do zamówienia oraz zmniejszenie stanu magazynowego
 foreach ($products as $product) {
+    // Dodanie produktu do zamówienia
     $insert_product_query = "INSERT INTO Zamowienie_Produkt (ID_Zamowienia, ID_Produktu, Ilosc, Cena)
                              VALUES (?, ?, ?, ?)";
 
@@ -95,6 +96,21 @@ foreach ($products as $product) {
     }
 
     sqlsrv_execute($insert_product_stmt);
+
+    // Zmniejszenie stanu magazynowego o zamówioną ilość
+    $update_stock_query = "UPDATE Produkt
+                           SET Stan_Magazynowy = Stan_Magazynowy - ?
+                           WHERE ID_Produktu = ?";
+
+    $update_stock_params = [$product['Ilosc'], $product['ID_Produktu']];
+    $update_stock_stmt = sqlsrv_prepare($conn, $update_stock_query, $update_stock_params);
+
+    if ($update_stock_stmt === false) {
+        sqlsrv_rollback($conn);
+        die(print_r(sqlsrv_errors(), true));
+    }
+
+    sqlsrv_execute($update_stock_stmt);
 }
 
 // Po zapisaniu zamówienia, możemy usunąć produkty z koszyka (opcjonalnie)
@@ -112,6 +128,7 @@ sqlsrv_execute($clear_cart_stmt);
 sqlsrv_commit($conn);
 
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pl">
