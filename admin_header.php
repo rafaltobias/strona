@@ -107,21 +107,14 @@ if (!isset($_SESSION['ID_Uzytkownika'])) {
                 <li><a href="users.php">Użytkownicy</a></li>
                 <li><a href="products.php">Produkty</a></li>
 
-                <!-- Jeśli użytkownik ma uprawnienia admina, pokaż dodatkowe opcje -->
-                <?php if ($_SESSION['ID_Uprawnienia'] == 3): ?>
-                    <li><a href="admin_settings.php">Ustawienia Admina</a></li>
-                <?php endif; ?>
+
                 
                 <!-- Wylogowanie -->
                 <li><a href="logout.php">Wyloguj się</a></li>
             </ul>
         </nav>
         
-        <div class="user-info">
-            <!-- Wyświetl informacje o zalogowanym użytkowniku -->
-            <span>Witaj, <?php echo $_SESSION['Imie']; ?></span> | 
-            <span>Rola: <?php echo ($_SESSION['ID_Uprawnienia'] == 3) ? 'Administrator' : 'Pracownik'; ?></span>
-        </div>
+       
     </header>
     
 </body>

@@ -54,7 +54,7 @@ do {
 } while ($order = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC));
 
 // Funkcja anulowania zamówienia
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order']) && $order_status !== 'Zrealizowane' && $order_status !== 'Wysłane') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order']) && $order_status !== 'Zrealizowane' && $order_status !== 'Wysłane' && $order_status !== 'Opóźnione' && $order_status !== 'Zwrócone') {
     // Anulowanie zamówienia
     $cancel_query = "UPDATE Zamowienie SET Status = 'Anulowane' WHERE ID_Zamowienia = ? AND ID_Uzytkownika = ?";
     $cancel_params = [$order_id, $id_uzytkownika];
@@ -113,12 +113,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order']) && $o
     </table>
 
     <!-- Sprawdzanie, czy zamówienie może zostać anulowane -->
-    <?php if ($order_status !== 'Zrealizowane' && $order_status !== 'Wysłane'): ?>
+    <?php if ($order_status !== 'Odebrane' && $order_status !== 'Nadane' && $order_status !== "Wysłane" && $order_status !== 'Zrealizowane' && $order_status !== 'Opóźnione' && $order_status !== 'Zwrócone'): ?>
         <form method="POST">
             <button type="submit" name="cancel_order" class="button cancel-button">Anuluj zamówienie</button>
         </form>
     <?php else: ?>
-        <p><strong>Nie możesz anulować tego zamówienia, ponieważ zostało już zrealizowane lub wysłane.</strong></p>
+        <p><strong>Nie możesz anulować tego zamówienia, ponieważ zostało już zrealizowane, opóźnione, wysłane lub zwrócone.</strong></p>
     <?php endif; ?>
 
     <a href="zamowienia.php" class="button">Powrót do zamówień</a>

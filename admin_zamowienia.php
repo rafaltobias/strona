@@ -2,32 +2,20 @@
 session_start();
 include 'db.php';
 
-// Pobranie tabeli z parametru GET lub POST
-$table = isset($_GET['table']) ? $_GET['table'] : '';
-$id_field = "ID_" . ucfirst($table); // Automatyczne określenie pola ID (np. "ID_Zamowienia")
-
 // Obsługa dodawania (Create) zamówienia
 if (isset($_POST['add'])) {
-    switch ($table) {
-        case 'Zamowienie':
-            $sql = "INSERT INTO Zamowienie (ID_Uzytkownika, Data_Zlozenia, Status, Laczna_Kwota) VALUES (?, ?, ?, ?)";
-            $params = [
-                $_POST['ID_Uzytkownika'],
-                $_POST['Data_Zlozenia'],
-                $_POST['Status'],
-                $_POST['Laczna_Kwota']
-            ];
-            break;
-        
-        // Możesz dodać inne tabele w przyszłości
-        default:
-            die("Nieobsługiwana tabela!");
-    }
+    $sql = "INSERT INTO Zamowienie (ID_Uzytkownika, Data_Zlozenia, Status, Laczna_Kwota) VALUES (?, ?, ?, ?)";
+    $params = [
+        $_POST['ID_Uzytkownika'],
+        $_POST['Data_Zlozenia'],
+        $_POST['Status'],
+        $_POST['Laczna_Kwota']
+    ];
 
     $stmt = sqlsrv_query($conn, $sql, $params);
     if ($stmt === false) die(print_r(sqlsrv_errors(), true));
 
-    header("Location: admin.php?table=$table");
+    header("Location: admin_zamowienia.php");
     exit();
 }
 
@@ -52,26 +40,19 @@ if (isset($_GET['delete'])) {
 
 // Obsługa edycji (Update) zamówienia
 if (isset($_POST['update'])) {
-    switch ($table) {
-        case 'Zamowienie':
-            $sql = "UPDATE Zamowienie SET ID_Uzytkownika = ?, Data_Zlozenia = ?, Status = ?, Laczna_Kwota = ? WHERE ID_Zamowienia = ?";
-            $params = [
-                $_POST['ID_Uzytkownika'],
-                $_POST['Data_Zlozenia'],
-                $_POST['Status'],
-                $_POST['Laczna_Kwota'],
-                $_POST['ID_Zamowienia']
-            ];
-            break;
-
-        default:
-            die("Nieobsługiwana tabela!");
-    }
+    $sql = "UPDATE Zamowienie SET ID_Uzytkownika = ?, Data_Zlozenia = ?, Status = ?, Laczna_Kwota = ? WHERE ID_Zamowienia = ?";
+    $params = [
+        $_POST['ID_Uzytkownika'],
+        $_POST['Data_Zlozenia'],
+        $_POST['Status'],
+        $_POST['Laczna_Kwota'],
+        $_POST['ID_Zamowienia']
+    ];
 
     $stmt = sqlsrv_query($conn, $sql, $params);
     if ($stmt === false) die(print_r(sqlsrv_errors(), true));
 
-    header("Location: admin.php?table=$table");
+    header("Location: admin_zamowienia.php");
     exit();
 }
 
@@ -101,20 +82,11 @@ if ($result === false) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Administratora - Zamówienia</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background-color: #f4f4f4; }
-        .form-container { margin-bottom: 20px; }
-        .form-container input, select, button {
-            padding: 10px; margin: 5px; font-size: 16px; width: calc(100% - 22px);
-        }
-        .form-container button { background-color: #008000; color: white; border: none; cursor: pointer; }
-    </style>
+    <link rel="stylesheet" href="css/admin_panel.css">
 </head>
 <body>
-    <h1>Panel Administratora - Zamówienia</h1>
+    <?php include "admin_header.php";?>
+    <h1>Zamówienia</h1>
 
     <!-- Formularz wyszukiwania -->
     <div class="form-container">
@@ -129,7 +101,16 @@ if ($result === false) {
         <form method="POST">
             <input type="number" name="ID_Uzytkownika" placeholder="ID Użytkownika" required>
             <input type="datetime-local" name="Data_Zlozenia" placeholder="Data Złożenia" required>
-            <input type="text" name="Status" placeholder="Status" required>
+            <select name="Status" required>
+    <option value="Nowe">Nowe</option>
+    <option value="W trakcie realizacji">W trakcie realizacji</option>
+    <option value="Wysłane">Wysłane</option>
+    <option value="Dostarczone">Dostarczone</option>
+    <option value="Anulowane">Anulowane</option>
+    <option value="Opóźnione">Opóźnione</option>
+    <option value="Zwrócone">Zwrócone</option>
+</select>
+
             <input type="number" name="Laczna_Kwota" placeholder="Łączna Kwota" step="0.01" required>
             <button type="submit" name="add">Dodaj Zamówienie</button>
         </form>
@@ -152,9 +133,25 @@ if ($result === false) {
             <tr>
                 <form method="POST">
                     <td><?= $row['ID_Zamowienia'] ?></td>
-                    <td><input type="number" name="ID_Uzytkownika" value="<?= $row['ID_Uzytkownika'] ?>" required></td>
+                    <td>
+                        <?=$row['ID_Uzytkownika'] ?>
+                        <input type="hidden" name="ID_Uzytkownika" value="<?= $row['ID_Uzytkownika'] ?>" required>
+                    </td>
+
                     <td><input type="datetime-local" name="Data_Zlozenia" value="<?= $row['Data_Zlozenia']->format('Y-m-d\TH:i:s') ?>" required></td>
-                    <td><input type="text" name="Status" value="<?= htmlspecialchars($row['Status']) ?>" required></td>
+                    <td>
+    <select name="Status" required>
+        <option value="Nowe" <?= $row['Status'] == 'Nowe' ? 'selected' : '' ?>>Nowe</option>
+        <option value="W trakcie realizacji" <?= $row['Status'] == 'W trakcie realizacji' ? 'selected' : '' ?>>W trakcie realizacji</option>
+        <option value="Wysłane" <?= $row['Status'] == 'Wysłane' ? 'selected' : '' ?>>Wysłane</option>
+        <option value="Dostarczone" <?= $row['Status'] == 'Dostarczone' ? 'selected' : '' ?>>Dostarczone</option>
+        <option value="Anulowane" <?= $row['Status'] == 'Anulowane' ? 'selected' : '' ?>>Anulowane</option>
+        <option value="Opóźnione" <?= $row['Status'] == 'Opóźnione' ? 'selected' : '' ?>>Opóźnione</option>
+        <option value="Zwrócone" <?= $row['Status'] == 'Zwrócone' ? 'selected' : '' ?>>Zwrócone</option>
+    </select>
+</td>
+
+
                     <td><input type="number" name="Laczna_Kwota" value="<?= $row['Laczna_Kwota'] ?>" step="0.01" required></td>
                     <td>
                         <button type="submit" name="update">Zaktualizuj</button>

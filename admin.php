@@ -4,13 +4,13 @@ session_start();
 $tabele = [
     "Produkty" => "admin_produkty.php",
     "Zamówienia" => "admin_zamowienia.php",
-    "Klienci" => "admin_klienci.php",
+    "Produkt w zamówieniu" => "admin_zamowienie_produkt.php",
     "Kategorie" => "admin_kategorie.php",
-    "Pracownicy" => "admin_pracownicy.php",
     "Faktury" => "admin_faktury.php",
     "Koszyki" => "admin_koszyk.php",
     "Produkt w koszyku" => "admin_koszyk_product.php",
-    "Uzytkownicy" => "C_admin.php"
+    "Uzytkownicy" => "C_admin.php",
+    "Recenzje" => "admin_reviews.php"
 ];
 ?>
 
