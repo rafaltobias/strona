@@ -4,6 +4,7 @@ include 'db.php'; // Połączenie z bazą danych
 
 
 $product_id = $_GET['id'] ?? 0;
+$user_id =  $_SESSION['ID_Uzytkownika'];
 
 if ($product_id <= 0) {
     echo "<script>alert('Nieprawidłowy ID produktu.');</script>";
@@ -31,6 +32,7 @@ if (!$product || $product['Aktywny'] != 1) {
 
 // Obsługa dodawania do koszyka
 $notification = ''; // Zmienna przechowująca komunikat dla użytkownika
+$review_message='';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     $user_id = $_SESSION['ID_Uzytkownika'] ?? null;
     $quantity = (int)$_POST['quantity'] ?? 1;
@@ -121,33 +123,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     }
 }
 
-// Obsługa dodawania recenzji
-$review_message = ''; // Zmienna przechowująca komunikat dla użytkownika
+// Sprawdzanie, czy użytkownik już dodał recenzję dla tego produktu
+$existing_review = null;
+
+if ($user_id) {
+    $query = "SELECT ID_Recenzji, Ocena, Komentarz FROM Recenzje WHERE ID_Produktu = ? AND ID_Uzytkownika = ?";
+    $stmt = sqlsrv_prepare($conn, $query, [$product_id, $user_id]);
+
+    if ($stmt === false) {
+        die(print_r(sqlsrv_errors(), true));
+    }
+
+    sqlsrv_execute($stmt);
+    $existing_review = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
+}
+
+// Obsługa dodawania/edycji recenzji
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
-    $user_id = $_SESSION['ID_Uzytkownika'] ?? null;
     $rating = (int)$_POST['rating'];
     $review_content = $_POST['review_content'] ?? '';
 
-    if (!$user_id) {
-        echo <<<HTML
-        <div class="modal">
-            <div class="modal-content">
-                <h2>Musisz być zalogowany!</h2>
-                <p>Aby dodać recenzję, zaloguj się na swoje konto.</p>
-                <a href="login.php" class="modal-button">Przejdź do logowania</a>
-            </div>
-        </div>
-        HTML;
-        exit;
-    }
-
     if ($rating >= 1 && $rating <= 5 && !empty($review_content)) {
-        
-      $query = "INSERT INTO Recenzje (ID_Produktu, ID_Uzytkownika, Ocena, Komentarz, Data_Recenzji) VALUES (?, ?, ?, ?, GETDATE())";
+        if ($existing_review) {
+            // Aktualizacja istniejącej recenzji
+            $query = "UPDATE Recenzje SET Ocena = ?, Komentarz = ?, Data_Recenzji = GETDATE() WHERE ID_Recenzji = ?";
+            $params = [$rating, $review_content, $existing_review['ID_Recenzji']];
+        } else {
+            // Dodawanie nowej recenzji
+            $query = "INSERT INTO Recenzje (ID_Produktu, ID_Uzytkownika, Ocena, Komentarz, Data_Recenzji) VALUES (?, ?, ?, ?, GETDATE())";
+            $params = [$product_id, $user_id, $rating, $review_content];
+        }
 
-        $params = [$product_id, $user_id, $rating, $review_content];
-       
-       
         $stmt = sqlsrv_prepare($conn, $query, $params);
 
         if ($stmt === false) {
@@ -155,11 +161,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
         }
 
         sqlsrv_execute($stmt);
-        $review_message = 'Twoja recenzja została dodana.';
+        $review_message = $existing_review ? 'Twoja recenzja została zaktualizowana.' : 'Twoja recenzja została dodana.';
     } else {
         $review_message = 'Ocena musi być w skali 1-5, a treść recenzji nie może być pusta.';
     }
+
+    if ($user_id) {
+      $query = "SELECT ID_Recenzji, Ocena, Komentarz FROM Recenzje WHERE ID_Produktu = ? AND ID_Uzytkownika = ?";
+      $stmt = sqlsrv_prepare($conn, $query, [$product_id, $user_id]);
+  
+      if ($stmt === false) {
+          die(print_r(sqlsrv_errors(), true));
+      }
+  
+      sqlsrv_execute($stmt);
+      $existing_review = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
+  }
 }
+
 
 // Pobranie istniejących recenzji dla produktu
 $query = "SELECT r.Komentarz, r.Ocena, r.Data_Recenzji, u.Imie 
@@ -223,27 +242,28 @@ sqlsrv_close($conn);
   </div>
 
   <!-- Formularz dodawania recenzji -->
-  <h3>Dodaj recenzję</h3>
-      <?php if ($review_message): ?>
-        <p style="color: green;"><?= $review_message ?></p>
-      <?php endif; ?>
+  <h3><?= $existing_review ? 'Edytuj swoją recenzję' : 'Dodaj recenzję' ?></h3>
+<?php if ($review_message): ?>
+    <p style="color: green;"><?= $review_message ?></p>
+<?php endif; ?>
 
-      <form action="" method="POST">
-        <label for="rating">Ocena (1-5):</label>
-        <select name="rating" id="rating" required>
-          <option value="">Wybierz ocenę</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
+<form action="" method="POST">
+    <label for="rating">Ocena (1-5):</label>
+    <select name="rating" id="rating" required>
+        <option value="">Wybierz ocenę</option>
+        <?php for ($i = 1; $i <= 5; $i++): ?>
+            <option value="<?= $i ?>" <?= $existing_review && $existing_review['Ocena'] == $i ? 'selected' : '' ?>>
+                <?= $i ?>
+            </option>
+        <?php endfor; ?>
+    </select>
 
-        <label for="review_content">Treść recenzji:</label>
-        <textarea name="review_content" id="review_content" rows="4" required></textarea>
+    <label for="review_content">Treść recenzji:</label>
+    <textarea name="review_content" id="review_content" rows="4" required><?= $existing_review['Komentarz'] ?? '' ?></textarea>
 
-        <button type="submit" name="submit_review">Dodaj recenzję</button>
-      </form>
+    <button type="submit" name="submit_review"><?= $existing_review ? 'Zaktualizuj recenzję' : 'Dodaj recenzję' ?></button>
+</form>
+
 
       <!-- Wyświetlanie recenzji -->
       <h4>Opinie użytkowników:</h4>
