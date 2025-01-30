@@ -2,7 +2,7 @@
 session_start();
 
 // Sprawdzamy poziom uprawnień użytkownika
-if (!isset($_SESSION['ID_Uprawnienia']) || ($_SESSION['ID_Uprawnienia'] < 3)) {
+if (!isset($_SESSION['ID_Uprawnienia']) || ($_SESSION['ID_Uprawnienia'] < 2)) {
     // Jeśli użytkownik nie ma odpowiednich uprawnień (poziom 3 lub 4), przekierowujemy go na stronę główną
     header("Location: index.php");
     exit();
@@ -11,13 +11,11 @@ if (!isset($_SESSION['ID_Uprawnienia']) || ($_SESSION['ID_Uprawnienia'] < 3)) {
 // Lista tabel w projekcie
 $tabele = [
     "Produkty" => "admin_produkty.php",
+ 
     "Zamówienia" => "admin_zamowienia.php",
-    "Produkt w zamówieniu" => "admin_zamowienie_produkt.php",
     "Kategorie" => "admin_kategorie.php",
     //"Faktury" => "admin_faktury.php",
-    "Koszyki" => "admin_koszyk.php",
-    "Produkt w koszyku" => "admin_koszyk_product.php",
-    "Uzytkownicy" => "C_admin.php",
+  
     "Recenzje" => "admin_reviews.php"
 ];
 ?>
@@ -93,7 +91,7 @@ $tabele = [
 </head>
 <body>
     <div class="container">
-        <h1>Admin Panel</h1>
+        <h1>Panel Pracownika</h1>
         <ul class="table-list">
             <?php foreach ($tabele as $nazwa => $link): ?>
                 <li><a href="<?php echo $link; ?>"><?php echo $nazwa; ?></a></li>

@@ -21,13 +21,33 @@ if ($stmt === false) {
 sqlsrv_execute($stmt);
 $koszyk = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
 
-// Jeśli nie znaleziono koszyka
+// Jeśli nie znaleziono koszyka, tworzymy nowy
 if (!$koszyk) {
-    die("Nie masz aktywnego koszyka.");
+    // Tworzenie nowego koszyka
+    $insert_query = "INSERT INTO Koszyk (ID_Uzytkownika, Status, Data_Utworzenia) VALUES (?, 'Aktywny', GETDATE())";
+    $insert_params = [$id_uzytkownika];
+    $insert_stmt = sqlsrv_prepare($conn, $insert_query, $insert_params);
+    if ($insert_stmt === false) {
+        die(print_r(sqlsrv_errors(), true));
+    }
+
+    sqlsrv_execute($insert_stmt);
+
+    // Pobranie ID nowo utworzonego koszyka
+    $id_query = "SELECT SCOPE_IDENTITY() AS ID_Koszyka";
+    $id_stmt = sqlsrv_query($conn, $id_query);
+    if ($id_stmt === false) {
+        die(print_r(sqlsrv_errors(), true));
+    }
+
+    $id_row = sqlsrv_fetch_array($id_stmt, SQLSRV_FETCH_ASSOC);
+    $koszyk_id = $id_row['ID_Koszyka'];
+    $koszyk = ['ID_Koszyka' => $koszyk_id, 'Status' => 'Aktywny', 'Data_Utworzenia' => new DateTime()];
+} else {
+    // Jeśli koszyk istnieje, przypisujemy jego ID
+    $koszyk_id = $koszyk['ID_Koszyka'];
 }
 
-// Pobranie ID koszyka
-$koszyk_id = $koszyk['ID_Koszyka'];
 
 // Obsługa AJAX
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {

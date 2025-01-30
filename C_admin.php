@@ -40,24 +40,47 @@ function getUsers($conn, $searchQuery, $filterPermission, $sortColumn, $sortOrde
 $result = getUsers($conn, $searchQuery, $filterPermission, $sortColumn, $sortOrder);
 // Operacje CRUD
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Sprawdzanie operacji tworzenia nowego użytkownika
     if (isset($_POST['create'])) {
         $imie = $_POST['imie'];
         $nazwisko = $_POST['nazwisko'];
         $email = $_POST['email'];
-        $haslo = password_hash($_POST['haslo'], PASSWORD_DEFAULT); // Hashowanie hasła
+        $haslo = $_POST['haslo']; // Hasło nie jest już haszowane tutaj
         $adres = $_POST['adres'];
         $id_uprawnienia = $_POST['id_uprawnienia'];
         
-        // Wstawienie nowego użytkownika do bazy
-        $query = "INSERT INTO Uzytkownik (Imie, Nazwisko, Email, Haslo, Adres, ID_Uprawnienia) VALUES (?, ?, ?, ?, ?, ?)";
-        $params = array($imie, $nazwisko, $email, $haslo, $adres, $id_uprawnienia);
-        $stmt = sqlsrv_query($conn, $query, $params);
-        if ($stmt === false) {
+        // Sprawdzanie, czy e-mail już istnieje w bazie
+        $check_email_query = "SELECT COUNT(*) AS EmailCount FROM Uzytkownik WHERE Email = ?";
+        $check_email_stmt = sqlsrv_query($conn, $check_email_query, array($email));
+
+        if ($check_email_stmt === false) {
             die(print_r(sqlsrv_errors(), true));
         }
-        $result = getUsers($conn, $searchQuery, $filterPermission, $sortColumn, $sortOrder);
-    }
+
+        $row = sqlsrv_fetch_array($check_email_stmt, SQLSRV_FETCH_ASSOC);
+        if ($row['EmailCount'] > 0) {
+            echo '<div class="alert">
+                    Użytkownik z takim adresem email już istnieje.
+                    <span class="close-btn" onclick="this.parentElement.style.display=\'none\';">&times;</span>
+                  </div>';
+        } else {
+            // Jeśli e-mail nie istnieje, dodajemy użytkownika
+            $query = "
+                INSERT INTO Uzytkownik (Imie, Nazwisko, Email, Haslo, Adres, ID_Uprawnienia)
+                VALUES (?, ?, ?, HASHBYTES('SHA2_256', ?), ?, ?)";
+            $params = array($imie, $nazwisko, $email, $haslo, $adres, $id_uprawnienia);
+
+            $stmt = sqlsrv_query($conn, $query, $params);
+
+            if ($stmt === false) {
+                die(print_r(sqlsrv_errors(), true));
+            }
+
+            // Po dodaniu użytkownika, odświeżamy listę użytkowników
+            echo '<div class="alert">
+                    Użytkownik został dodany pomyślnie.
+                    <span class="close-btn" onclick="this.parentElement.style.display=\'none\';">&times;</span>
+                  </div>';
+        }}
 
     // Sprawdzanie operacji aktualizacji użytkownika
     elseif (isset($_POST['update'])) {

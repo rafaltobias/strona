@@ -3,7 +3,7 @@ session_start();
 include 'db.php'; // Plik z połączeniem do bazy danych
 
 // Sprawdzenie, czy użytkownik jest zalogowany i ma uprawnienia admina
-if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] != 3) {
+if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] < 2) {
     header('Location: index.php');
     exit();
 }

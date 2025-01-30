@@ -2,16 +2,16 @@
 session_start();
 include 'db.php'; 
 
-// Sprawdzanie, czy formularz został wysłany
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['Email'] ?? '';
     $haslo = $_POST['Haslo'] ?? '';
 
-    // Walidacja formularza
+ 
     if (!$email || !$haslo) {
         echo "<p class='error'>Wszystkie pola muszą być wypełnione!</p>";
     } else {
-        // Zapytanie do bazy, aby sprawdzić, czy użytkownik istnieje
+      
         $query = "SELECT * FROM Uzytkownik WHERE Email = ? AND Haslo = HASHBYTES('SHA2_256', ?)";
         $stmt = sqlsrv_prepare($conn, $query, [$email, $haslo]);
 
@@ -23,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
 
         if ($user) {
-            // Ustawienie sesji użytkownika
             $_SESSION['ID_Uzytkownika'] = $user['ID_Uzytkownika'];
             $_SESSION['Email'] = $user['Email'];
             $_SESSION['Imie'] = $user['Imie'];
@@ -31,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['Adres'] = $user['Adres'];
             $_SESSION['ID_Uprawnienia'] = $user['ID_Uprawnienia'];
 
-            // Przekierowanie na stronę główną
+        
             header("Location: index.php");
             exit;
         } else {

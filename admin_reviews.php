@@ -3,7 +3,7 @@ session_start();
 include 'db.php'; 
 
 // Sprawdzenie, czy użytkownik jest zalogowany i ma uprawnienia admina
-if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] != 3) {
+if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] <2) {
     header('Location: index.php');
     exit();
 }
@@ -84,26 +84,6 @@ if ($result === false) {
             <div class="alert alert-success"><?php echo $success_message; ?></div>
         <?php endif; ?>
 
-        <!-- Formularz dodawania nowej recenzji -->
-        <h2>Dodaj nową recenzję</h2>
-        <div class="form-container">
-            <form method="post">
-                <label for="id_produktu">ID Produktu:</label>
-                <input type="number" id="id_produktu" name="id_produktu" required>
-
-                <label for="id_uzytkownika">ID Użytkownika:</label>
-                <input type="number" id="id_uzytkownika" name="id_uzytkownika" required>
-
-                <label for="ocena">Ocena (1-5):</label>
-                <input type="number" id="ocena" name="ocena" min="1" max="5" required>
-
-                <label for="komentarz">Komentarz:</label>
-                <textarea id="komentarz" name="komentarz" rows="4"></textarea>
-
-                <input type="submit" name="create" value="Dodaj">
-            </form>
-        </div>
-
         <!-- Tabela recenzji -->
         <table>
             <thead>
@@ -122,12 +102,14 @@ if ($result === false) {
                 <tr>
                     <form method="post">
                         <td><?php echo $row['ID_Recenzji']; ?></td>
-                        <td><input type="number" name="id_produktu" value="<?php echo $row['ID_Produktu']; ?>" required></td>
-                        <td><input type="number" name="id_uzytkownika" value="<?php echo $row['ID_Uzytkownika']; ?>" required></td>
+                        <!-- Zmieniamy te pola na zwykły tekst -->
+                        <td><?php echo $row['ID_Produktu']; ?></td>
+                        <td><?php echo $row['ID_Uzytkownika']; ?></td>
                         <td><input type="number" name="ocena" value="<?php echo $row['Ocena']; ?>" min="1" max="5" required></td>
                         <td><textarea name="komentarz"><?php echo $row['Komentarz']; ?></textarea></td>
                         <td><?php echo $row['Data_Recenzji']->format('Y-m-d H:i:s'); ?></td>
                         <td>
+                            <!-- Ukryty input do przekazania ID recenzji -->
                             <input type="hidden" name="id_recenzji" value="<?php echo $row['ID_Recenzji']; ?>">
                             <button type="submit" name="update">Aktualizuj</button>
                             <button type="submit" name="delete">Usuń</button>
@@ -143,3 +125,4 @@ if ($result === false) {
     </main>
 </body>
 </html>
+

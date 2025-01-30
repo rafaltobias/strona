@@ -25,6 +25,35 @@ if ($stmt === false) {
 sqlsrv_execute($stmt);
 $user = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
 
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
+    $new_password = $_POST['nowe_haslo'] ?? '';
+    $confirm_password = $_POST['potwierdz_haslo'] ?? '';
+
+    if ($new_password && $confirm_password) {
+        if ($new_password === $confirm_password) {
+            // Hash the new password
+            $hashed_password = $new_password;
+
+            // Update the password in the database
+            $updatePasswordQuery = "UPDATE Uzytkownik SET Haslo = HASHBYTES('SHA2_256', ?) WHERE ID_Uzytkownika = ?";
+            $updatePasswordParams = [$hashed_password, $id_uzytkownika];
+            $updatePasswordStmt = sqlsrv_query($conn, $updatePasswordQuery, $updatePasswordParams);
+
+            if ($updatePasswordStmt === false) {
+                $message = "<div class='alert alert-danger'>Błąd podczas zmiany hasła!</div>";
+            } else {
+                $message = "<div class='alert alert-success'>Hasło zostało zmienione!</div>";
+            }
+        } else {
+            $message = "<div class='alert alert-danger'>Hasła nie są zgodne!</div>";
+        }
+    } else {
+        $message = "<div class='alert alert-warning'>Wszystkie pola muszą być wypełnione!</div>";
+    }
+}
+
+
 // Obsługa aktualizacji danych użytkownika
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_profile'])) {
     $imie = $_POST['imie'] ?? '';

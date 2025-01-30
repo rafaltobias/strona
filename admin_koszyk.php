@@ -1,7 +1,10 @@
 <?php
 session_start();
 include 'db.php'; // Połączenie z bazą danych
-
+if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] < 3) {
+    header('Location: index.php');
+    exit();
+}
 $error_message = ""; // Zmienna na komunikaty błędów
 $success_message = ""; // Zmienna na komunikaty sukcesu
 
@@ -81,20 +84,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             <div class="alert alert-success"><?php echo $success_message; ?></div>
         <?php endif; ?>
 
-        <!-- Formularz dodawania nowego rekordu -->
-        <h2>Dodaj nowy koszyk</h2>
-        <div class="form-container">
-            <form method="POST">
-                <label>ID Użytkownika:</label>
-                <input type="text" name="ID_Uzytkownika" required>
-                
-                <label>Data Utworzenia:</label>
-                <input type="datetime-local" name="Data_Utworzenia" required>
-                
-                <button type="submit" name="add">Dodaj</button>
-            </form>
-        </div>
-
         <!-- Tabela koszyków -->
         <h2>Lista Koszyków</h2>
         <table>
@@ -112,17 +101,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
                 $result = sqlsrv_query($conn, $query);
                 while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) {
                     ?>
-                    <form method="POST">
-                        <tr>
-                            <td><input type="text" name="ID_Koszyka" value="<?php echo $row['ID_Koszyka']; ?>" readonly></td>
-                            <td><input type="text" name="ID_Uzytkownika" value="<?php echo $row['ID_Uzytkownika']; ?>" required></td>
-                            <td><input type="datetime-local" name="Data_Utworzenia" value="<?php echo $row['Data_Utworzenia']->format('Y-m-d\TH:i'); ?>" required></td>
-                            <td>
-                                <button type="submit" name="update">Zaktualizuj</button>
+                    <tr>
+                        <td><?php echo $row['ID_Koszyka']; ?></td>
+                        <td><?php echo $row['ID_Uzytkownika']; ?></td>
+                        <td><?php echo $row['Data_Utworzenia']->format('Y-m-d H:i'); ?></td>
+                        <td>
+                            <form method="POST">
                                 <button type="submit" name="delete_id" value="<?php echo $row['ID_Koszyka']; ?>" onclick="return confirm('Czy na pewno chcesz usunąć ten koszyk?')">Usuń</button>
-                            </td>
-                        </tr>
-                    </form>
+                            </form>
+                        </td>
+                    </tr>
                     <?php
                 }
                 ?>

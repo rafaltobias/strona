@@ -3,7 +3,7 @@ session_start();
 include 'db.php'; 
 
 // Sprawdzenie, czy użytkownik jest zalogowany i ma uprawnienia admina
-if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] != 3) {
+if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] < 2) {
     header('Location: index.php');
     exit();
 }
@@ -154,10 +154,10 @@ if ($result === false) {
                 <input type="text" id="nazwa_produktu" name="nazwa_produktu" required>
                 
                 <label for="cena">Cena:</label>
-                <input type="number" id="cena" name="cena" required>
+                <input type="number" id="cena" name="cena" required min="0.01" step="0.01">
                 
                 <label for="stan_magazynowy">Stan Magazynowy:</label>
-                <input type="number" id="stan_magazynowy" name="stan_magazynowy" required>
+                <input type="number" id="stan_magazynowy" name="stan_magazynowy" required min="1">
                 
                 <label for="id_kategorii">ID Kategorii:</label>
                 <select id="id_kategorii" name="id_kategorii" required>
@@ -196,8 +196,8 @@ if ($result === false) {
                     <form method="post">
                         <td><?php echo $row['ID_Produktu']; ?></td>
                         <td><input type="text" name="nazwa_produktu" value="<?php echo $row['Nazwa_Produktu']; ?>" required></td>
-                        <td><input type="number" name="cena" value="<?php echo $row['Cena']; ?>" required></td>
-                        <td><input type="number" name="stan_magazynowy" value="<?php echo $row['Stan_Magazynowy']; ?>" required></td>
+                        <td><input type="number" name="cena" value="<?php echo $row['Cena']; ?>" required min="0.01" step="0.01"></td>
+                        <td><input type="number" name="stan_magazynowy" value="<?php echo $row['Stan_Magazynowy']; ?>" required min="1"></td>
                         <td>
                             <select name="id_kategorii" required>
                                 <?php foreach ($categories as $category): ?>

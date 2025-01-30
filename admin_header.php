@@ -104,8 +104,8 @@ if (!isset($_SESSION['ID_Uzytkownika'])) {
             <ul>
                 <li><a href="index.php">Strona Główna</a></li>
                 <li><a href="admin.php">Panel Główny</a></li>
-                <li><a href="users.php">Użytkownicy</a></li>
-                <li><a href="products.php">Produkty</a></li>
+                <li><a href="C_admin.php">Użytkownicy</a></li>
+                <li><a href="admin_produkty.php">Produkty</a></li>
 
 
                 

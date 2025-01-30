@@ -34,7 +34,7 @@ if (isset($_GET['search'])) {
     $query = "SELECT * FROM Produkt WHERE ID_Kategorii = ?  AND Aktywny = 1  ORDER BY ID_Produktu";
     $params[] = $category_filter;
 } else {
-    $query = "SELECT TOP 3 * FROM Produkt WHERE Aktywny = 1 ORDER BY ID_Produktu"; // Pobierz tylko 3 produkty
+    $query = "SELECT * FROM Produkt WHERE Aktywny = 1 ORDER BY ID_Produktu"; // Pobierz tylko 3 produkty
 }
 
 $result = sqlsrv_query($conn, $query, $params);
@@ -134,28 +134,57 @@ if ($result === false) {
       </form>
     </div>
     <div class="user-menu">
-      <?php if ($is_logged_in): ?>
-        <p>Witaj, <?= htmlspecialchars($user_name) ?>!</p>
-        <a href="logout.php">Wyloguj</a>
-        <a href="cart.php">Koszyk</a>
-        <a href="zamowienia.php">Zamówienia</a>
-        <a href="profil.php">Profil</a>
-        <?php if ($ID_Uprawnienia == 3): ?>
-          <div class="admin-panel">
-            <a href="admin.php">Panel Admina</a>
-          </div>
-        <?php endif; ?>
-      <?php else: ?>
-        <a href="register.php">Rejestracja</a>
-        <a href="login.php">Logowanie</a>
-      <?php endif; ?>
-    </div>
+  <?php if ($is_logged_in): ?>
+    <p>Witaj, <?= htmlspecialchars($user_name) ?>!</p>
+    
+    <a href="cart.php">Koszyk</a>
+    <a href="zamowienia.php">Zamówienia</a>
+    <a href="profil.php">Profil</a>
+    
+    <?php if ($ID_Uprawnienia == 3): ?>
+      <div class="admin-panel">
+        <a href="admin.php">Panel Admina</a>
+      </div>
+    <?php elseif ($ID_Uprawnienia == 2): ?>
+      <div class="employee-panel">
+        <a href="employee.php">Panel Pracownika</a>
+      </div>
+    <?php endif; ?>
+
+    <a href="logout.php">Wyloguj</a>
+  <?php else: ?>
+    <a href="register.php">Rejestracja</a>
+    <a href="login.php">Logowanie</a>
+  <?php endif; ?>
+</div>
+
   </header>
 
   <main>
-    <section class="banner">
-      <h1>TU IDZIE BANNER</h1>
-    </section>
+  <section class="banner">
+  <div class="banner-content">
+    <h1>Witamy w TechHouse</h1>
+    <p>Najlepsze technologie w zasięgu ręki</p>
+  </div>
+</section>
+
+<style>
+  .banner {
+    background: url('baner.webp') no-repeat center/cover;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+  }
+  .banner-content {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+  }
+</style>
+
+
 
     <section class="content">
       <aside class="sidebar">
@@ -180,7 +209,7 @@ if ($result === false) {
             <div class="product">
               <img src="https://via.placeholder.com/150" alt="Produkt">
               <h3><?= htmlspecialchars($row['Nazwa_Produktu']) ?></h3>
-              <p>⭐⭐⭐⭐⭐</p>
+              
               <p><?= number_format($row['Cena'], 2) ?> zł</p>
               <a href="product.php?id=<?= htmlspecialchars($row['ID_Produktu']) ?>">Zobacz produkt</a>
             </div>

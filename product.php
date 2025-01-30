@@ -30,6 +30,8 @@ if (!$product || $product['Aktywny'] != 1) {
 }
 
 
+
+
 // Obsługa dodawania do koszyka
 $notification = ''; // Zmienna przechowująca komunikat dla użytkownika
 $review_message='';
@@ -123,6 +125,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     }
 }
 
+// Sprawdzanie, czy użytkownik zakupił ten produkt
+$has_purchased = false;
+if ($user_id) {
+    $query = "SELECT 1 FROM Zamowienie_Produkt WHERE ID_Produktu = ? AND ID_Zamowienia IN (SELECT ID_Zamowienia FROM Zamowienie WHERE ID_Uzytkownika = ?)";
+    $stmt = sqlsrv_prepare($conn, $query, [$product_id, $user_id]);
+
+    if ($stmt === false) {
+        die(print_r(sqlsrv_errors(), true));
+    }
+
+    sqlsrv_execute($stmt);
+    if (sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+        $has_purchased = true;
+    }
+}
+
 // Sprawdzanie, czy użytkownik już dodał recenzję dla tego produktu
 $existing_review = null;
 
@@ -137,6 +155,29 @@ if ($user_id) {
     sqlsrv_execute($stmt);
     $existing_review = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
 }
+
+// Obsługa usuwania recenzji
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_review'])) {
+    // Upewnijmy się, że użytkownik ma prawo usunąć recenzję
+    
+        // Usuwanie recenzji
+        $query = "DELETE FROM Recenzje WHERE ID_Recenzji = ?";
+        $params = [$existing_review['ID_Recenzji']];
+        
+        $stmt = sqlsrv_prepare($conn, $query, $params);
+        
+        if ($stmt === false) {
+            die(print_r(sqlsrv_errors(), true));
+        }
+        
+        sqlsrv_execute($stmt);
+        $review_message = 'Twoja recenzja została usunięta.';
+        
+        // Po usunięciu recenzji ustawiamy zmienną na null, by wyświetlić formularz na nowo
+        $existing_review = null;
+    
+}
+
 
 // Obsługa dodawania/edycji recenzji
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
@@ -241,28 +282,38 @@ sqlsrv_close($conn);
     </section>
   </div>
 
-  <!-- Formularz dodawania recenzji -->
-  <h3><?= $existing_review ? 'Edytuj swoją recenzję' : 'Dodaj recenzję' ?></h3>
-<?php if ($review_message): ?>
-    <p style="color: green;"><?= $review_message ?></p>
+ <!-- Formularz dodawania recenzji -->
+<?php if ($has_purchased): ?>
+    <h3><?= $existing_review ? 'Edytuj swoją recenzję' : 'Dodaj recenzję' ?></h3>
+    <?php if ($review_message): ?>
+        <p style="color: green;"><?= $review_message ?></p>
+    <?php endif; ?>
+
+    <form action="" method="POST">
+        <label for="rating">Ocena (1-5):</label>
+        <select name="rating" id="rating" required>
+            <option value="">Wybierz ocenę</option>
+            <?php for ($i = 1; $i <= 5; $i++): ?>
+                <option value="<?= $i ?>" <?= $existing_review && $existing_review['Ocena'] == $i ? 'selected' : '' ?>>
+                    <?= $i ?>
+                </option>
+            <?php endfor; ?>
+        </select>
+
+        <label for="review_content">Treść recenzji:</label>
+        <textarea name="review_content" id="review_content" rows="4" required><?= $existing_review['Komentarz'] ?? '' ?></textarea>
+
+        <button type="submit" name="submit_review"><?= $existing_review ? 'Zaktualizuj recenzję' : 'Dodaj recenzję' ?></button>
+
+        <?php if ($existing_review): ?>
+            <form action="" method="POST">
+                <button type="submit" name="delete_review">Usuń recenzję</button>
+            </form>
+        <?php endif; ?>
+    </form>
+<?php else: ?>
+    <p>Musisz najpierw zakupić ten produkt, aby dodać recenzję.</p>
 <?php endif; ?>
-
-<form action="" method="POST">
-    <label for="rating">Ocena (1-5):</label>
-    <select name="rating" id="rating" required>
-        <option value="">Wybierz ocenę</option>
-        <?php for ($i = 1; $i <= 5; $i++): ?>
-            <option value="<?= $i ?>" <?= $existing_review && $existing_review['Ocena'] == $i ? 'selected' : '' ?>>
-                <?= $i ?>
-            </option>
-        <?php endfor; ?>
-    </select>
-
-    <label for="review_content">Treść recenzji:</label>
-    <textarea name="review_content" id="review_content" rows="4" required><?= $existing_review['Komentarz'] ?? '' ?></textarea>
-
-    <button type="submit" name="submit_review"><?= $existing_review ? 'Zaktualizuj recenzję' : 'Dodaj recenzję' ?></button>
-</form>
 
 
       <!-- Wyświetlanie recenzji -->

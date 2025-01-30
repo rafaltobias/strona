@@ -2,14 +2,26 @@
 session_start();
 include 'db.php'; 
 
-// Sprawdzenie, czy użytkownik jest zalogowany i ma uprawnienia admina
 if (!isset($_SESSION['ID_Uzytkownika']) || $_SESSION['ID_Uprawnienia'] != 3) {
     header('Location: index.php');
     exit();
 }
 
-$error_message = ""; // Zmienna na komunikaty błędów
-$success_message = ""; // Zmienna na komunikaty sukcesu
+$error_message = "";
+$success_message = "";
+
+// Pobranie dostępnych zamówień i produktów do dropdownów
+$zamowienia_query = "SELECT ID_Zamowienia FROM Zamowienie";
+$zamowienia_result = sqlsrv_query($conn, $zamowienia_query);
+if ($zamowienia_result === false) {
+    $error_message = "Błąd pobierania zamówień: " . print_r(sqlsrv_errors(), true);
+}
+
+$produkty_query = "SELECT ID_Produktu, Nazwa_Produktu FROM Produkt";
+$produkty_result = sqlsrv_query($conn, $produkty_query);
+if ($produkty_result === false) {
+    $error_message = "Błąd pobierania produktów: " . print_r(sqlsrv_errors(), true);
+}
 
 // Operacje CRUD
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -19,39 +31,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $ilosc = $_POST['ilosc'];
         $cena = $_POST['cena'];
 
-        // Sprawdzenie, czy produkt w zamówieniu już istnieje
-        $check_query = "SELECT COUNT(*) AS count FROM Zamowienie_Produkt WHERE ID_Zamowienia = ? AND ID_Produktu = ?";
-        $params_check = [$id_zamowienia, $id_produktu];
-        if (isset($_POST['update'])) {
-            // Wykluczamy aktualny rekord z walidacji
-            $id_zamowienie_produkt = $_POST['id_zamowienie_produkt'];
-            $check_query .= " AND NOT EXISTS (SELECT 1 FROM Zamowienie_Produkt WHERE ID_Zamowienia_Produkt = ?)";
-            $params_check[] = $id_zamowienie_produkt;
+        if (isset($_POST['create'])) {
+            $query = "INSERT INTO Zamowienie_Produkt (ID_Zamowienia, ID_Produktu, Ilosc, Cena) VALUES (?, ?, ?, ?)";
+            $params = array($id_zamowienia, $id_produktu, $ilosc, $cena);
+        } elseif (isset($_POST['update'])) {
+            $query = "UPDATE Zamowienie_Produkt SET Ilosc = ?, Cena = ? WHERE ID_Zamowienia = ? AND ID_Produktu = ?";
+            $params = array($ilosc, $cena, $id_zamowienia, $id_produktu);
         }
-        $check_stmt = sqlsrv_query($conn, $check_query, $params_check);
-        if ($check_stmt === false) {
-            die(print_r(sqlsrv_errors(), true));
-        }
-        $check_result = sqlsrv_fetch_array($check_stmt, SQLSRV_FETCH_ASSOC);
-        
-        if ($check_result['count'] > 0) {
-            $error_message = "Produkt o podanym ID już istnieje w tym zamówieniu.";
+
+        $stmt = sqlsrv_query($conn, $query, $params);
+        if ($stmt === false) {
+            $error_message = "Wystąpił błąd: " . print_r(sqlsrv_errors(), true);
         } else {
-            if (isset($_POST['create'])) {
-                // Dodawanie nowego rekordu
-                $query = "INSERT INTO Zamowienie_Produkt (ID_Zamowienia, ID_Produktu, Ilosc, Cena) VALUES (?, ?, ?, ?)";
-                $params = array($id_zamowienia, $id_produktu, $ilosc, $cena);
-            } elseif (isset($_POST['update'])) {
-                // Aktualizacja istniejącego rekordu
-                $query = "UPDATE Zamowienie_Produkt SET Ilosc = ?, Cena = ? WHERE ID_Zamowienia = ? AND ID_Produktu = ?";
-                $params = array($ilosc, $cena, $id_zamowienia, $id_produktu);
-            }
-
-            $stmt = sqlsrv_query($conn, $query, $params);
-            if ($stmt === false) {
-                die(print_r(sqlsrv_errors(), true));
-            }
-
             $success_message = isset($_POST['create']) ? "Rekord został dodany." : "Rekord został zaktualizowany.";
         }
     } elseif (isset($_POST['delete'])) {
@@ -60,21 +51,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $query = "DELETE FROM Zamowienie_Produkt WHERE ID_Zamowienia = ? AND ID_Produktu = ?";
         $params = array($id_zamowienia, $id_produktu);
         $stmt = sqlsrv_query($conn, $query, $params);
-    
+
         if ($stmt === false) {
-            die(print_r(sqlsrv_errors(), true));
+            $error_message = "Wystąpił błąd: " . print_r(sqlsrv_errors(), true);
         } else {
             $success_message = "Rekord został pomyślnie usunięty.";
         }
     }
 }
 
-// Pobieranie wszystkich rekordów z bazy danych
+// Pobranie listy zamówień i produktów
 $query = "SELECT * FROM Zamowienie_Produkt";
 $result = sqlsrv_query($conn, $query);
-
 if ($result === false) {
-    die(print_r(sqlsrv_errors(), true));
+    $error_message = "Wystąpił błąd: " . print_r(sqlsrv_errors(), true);
 }
 ?>
 
@@ -85,15 +75,18 @@ if ($result === false) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Zamówienie Produkt</title>
     <link rel="stylesheet" href="css/admin_panel.css">
+    <script>
+        // Wyświetlanie błędu w alert
+        <?php if (!empty($error_message)): ?>
+            alert("<?php echo addslashes($error_message); ?>");
+        <?php endif; ?>
+    </script>
 </head>
 <body>
     <header class="header">
         <?php include "admin_header.php"; ?>
     </header>
     <main>
-        <?php if ($error_message): ?>
-            <div class="alert alert-error"><?php echo $error_message; ?></div>
-        <?php endif; ?>
         <?php if ($success_message): ?>
             <div class="alert alert-success"><?php echo $success_message; ?></div>
         <?php endif; ?>
@@ -103,16 +96,24 @@ if ($result === false) {
         <div class="form-container">
             <form method="post">
                 <label for="id_zamowienia">ID Zamówienia:</label>
-                <input type="number" id="id_zamowienia" name="id_zamowienia" required>
+                <select id="id_zamowienia" name="id_zamowienia" required>
+                    <?php while ($row = sqlsrv_fetch_array($zamowienia_result, SQLSRV_FETCH_ASSOC)): ?>
+                        <option value="<?= $row['ID_Zamowienia'] ?>"><?= $row['ID_Zamowienia'] ?></option>
+                    <?php endwhile; ?>
+                </select>
                 
                 <label for="id_produktu">ID Produktu:</label>
-                <input type="number" id="id_produktu" name="id_produktu" required>
+                <select id="id_produktu" name="id_produktu" required>
+                    <?php while ($row = sqlsrv_fetch_array($produkty_result, SQLSRV_FETCH_ASSOC)): ?>
+                        <option value="<?= $row['ID_Produktu'] ?>"><?= $row['ID_Produktu'] ?> - <?= htmlspecialchars($row['Nazwa_Produktu']) ?></option>
+                    <?php endwhile; ?>
+                </select>
                 
                 <label for="ilosc">Ilość:</label>
-                <input type="number" id="ilosc" name="ilosc" required>
+                <input type="number" id="ilosc" name="ilosc" required min="1">
                 
                 <label for="cena">Cena:</label>
-                <input type="number" step="0.01" id="cena" name="cena" required>
+                <input type="number" step="0.01" id="cena" name="cena" required min="0.01">
                 
                 <input type="submit" name="create" value="Dodaj">
             </form>
@@ -135,8 +136,8 @@ if ($result === false) {
                     <form method="post">
                         <td><?php echo $row['ID_Zamowienia']; ?></td>
                         <td><?php echo $row['ID_Produktu']; ?></td>
-                        <td><input type="number" name="ilosc" value="<?php echo $row['Ilosc']; ?>" required></td>
-                        <td><input type="number" step="0.01" name="cena" value="<?php echo $row['Cena']; ?>" required></td>
+                        <td><input type="number" name="ilosc" value="<?php echo $row['Ilosc']; ?>" required min="1"></td>
+                        <td><input type="number" step="0.01" name="cena" value="<?php echo $row['Cena']; ?>" required min="0.01"></td>
                         <td>
                             <input type="hidden" name="id_zamowienia" value="<?php echo $row['ID_Zamowienia']; ?>">
                             <input type="hidden" name="id_produktu" value="<?php echo $row['ID_Produktu']; ?>">
